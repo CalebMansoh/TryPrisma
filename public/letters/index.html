@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Letter</title>
+    <link rel="stylesheet" href="/letters/style.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>Create Letter</h1>
+
+        <form action="/letters" method="POST">
+
+            <div class="form-group">
+                <label for="address">Address</label>
+
+                <input
+                    type="text"
+                    id="address"
+                    name="address"
+                    placeholder="Enter recipient address"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="title">Letter Title</label>
+
+                <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    placeholder="Enter letter title"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="body">Letter Body</label>
+
+                <textarea
+                    id="body"
+                    name="body"
+                    placeholder="Write your letter..."
+                    required
+                ></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="writerSearch">Search Writer</label>
+
+                <input
+                    type="text"
+                    id="writerSearch"
+                    placeholder="Search by name or email"
+                    autocomplete="off"
+                >
+
+                <div id="searchResults"></div>
+
+                <input
+                    type="hidden"
+                    id="writerId"
+                    name="writerId"
+                    required
+                >
+
+                <p id="selectedWriter"></p>
+            </div>
+
+            <button type="submit">Create Letter</button>
+
+        </form>
+
+        <p class="link">
+            <a href="/">Create User</a>
+        </p>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById("writerSearch");
+        const resultsContainer = document.getElementById("searchResults");
+        const writerIdInput = document.getElementById("writerId");
+        const selectedWriter = document.getElementById("selectedWriter");
+
+        searchInput.addEventListener("input", async () => {
+            const search = searchInput.value.trim();
+
+            writerIdInput.value = "";
+            selectedWriter.textContent = "";
+            resultsContainer.innerHTML = "";
+
+            if (search.length < 2) {
+                return;
+            }
+
+            try {
+                const response = await fetch(
+                    `/letters/writers/search?q=${encodeURIComponent(search)}`
+                );
+
+                const users = await response.json();
+
+                users.forEach(user => {
+                    const button = document.createElement("button");
+
+                    button.type = "button";
+                    button.className = "search-result";
+
+                    button.textContent = `${user.name} (${user.email})`;
+
+                    button.addEventListener("click", () => {
+                        writerIdInput.value = user.id;
+                        searchInput.value = user.name;
+                        selectedWriter.textContent =
+                            `Selected writer: ${user.name}`;
+                        resultsContainer.innerHTML = "";
+                    });
+
+                    resultsContainer.appendChild(button);
+                });
+
+                if (users.length === 0) {
+                    resultsContainer.textContent = "No users found.";
+                }
+
+            } catch (error) {
+                console.error(error);
+                resultsContainer.textContent = "Search failed.";
+            }
+        });
+
+        document.querySelector("form").addEventListener("submit", (event) => {
+            if (!writerIdInput.value) {
+                event.preventDefault();
+                alert("Please search for and select a writer.");
+            }
+        });
+    </script>
+
+</body>
+</html>
